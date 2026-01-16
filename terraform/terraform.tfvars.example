@@ -1,0 +1,121 @@
+# Core Configuration
+project_name = "multiagent-ai"
+environment  = "dev"
+location     = "eastus"
+
+tags = {
+  Project     = "Multi-Agent AI System"
+  Environment = "Development"
+  ManagedBy   = "Terraform"
+  CostCenter  = "Engineering"
+  Owner       = "AI-Team"
+}
+
+# Networking Configuration
+vnet_address_space = ["10.0.0.0/16"]
+
+subnet_config = {
+  gateway = {
+    address_prefixes  = ["10.0.1.0/24"]
+    service_endpoints = []
+    delegation        = null
+  }
+  agents = {
+    address_prefixes  = ["10.0.2.0/24"]
+    service_endpoints = ["Microsoft.AzureCosmosDB", "Microsoft.KeyVault"]
+    delegation = {
+      name = "aci-delegation"
+      service_delegation = {
+        name    = "Microsoft.ContainerInstance/containerGroups"
+        actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+      }
+    }
+  }
+  private_endpoints = {
+    address_prefixes  = ["10.0.3.0/24"]
+    service_endpoints = ["Microsoft.AzureCosmosDB", "Microsoft.Storage", "Microsoft.KeyVault"]
+    delegation        = null
+  }
+}
+
+# Container Registry Configuration
+acr_sku                       = "Premium"
+acr_geo_replication_locations = ["westus2"] # Empty for dev/staging, add replicas for production
+
+# Cosmos DB Configuration
+cosmos_db_consistency_level        = "Session"
+cosmos_db_max_interval_in_seconds  = 10
+cosmos_db_max_staleness_prefix     = 200
+cosmos_db_autoscale_max_throughput = 4000
+
+cosmos_db_databases = {
+  conversations = {
+    containers = {
+      sessions = {
+        partition_key_path = "/sessionId"
+        autoscale_settings = {
+          max_throughput = 4000
+        }
+      }
+      messages = {
+        partition_key_path = "/conversationId"
+        autoscale_settings = {
+          max_throughput = 4000
+        }
+      }
+    }
+  }
+}
+
+# Redis Configuration
+redis_capacity = 1        # GB (use 4 for production with redis_family = "P")
+redis_family   = "C"      # C for Standard, P for Premium
+redis_sku_name = "Standard"
+
+# Agent Configuration
+agents = {
+  agent1 = {
+    name        = "conversation-agent"
+    description = "Handles conversational interactions"
+    port        = 8080
+  }
+  agent2 = {
+    name        = "analysis-agent"
+    description = "Performs data analysis"
+    port        = 8080
+  }
+  agent3 = {
+    name        = "recommendation-agent"
+    description = "Generates recommendations"
+    port        = 8080
+  }
+  agent4 = {
+    name        = "knowledge-agent"
+    description = "Manages knowledge base"
+    port        = 8080
+  }
+  agent5 = {
+    name        = "orchestration-agent"
+    description = "Orchestrates multi-agent workflows"
+    port        = 8080
+  }
+}
+
+agent_container_image = "agent-base:latest"
+agent_cpu             = 1   # CPU cores
+agent_memory          = 2   # GB
+
+# Autoscaling Configuration
+enable_autoscaling  = true
+min_instance_count  = 2
+max_instance_count  = 10
+
+# Application Gateway Configuration
+enable_waf = true
+waf_mode   = "Prevention"
+
+# Observability Configuration
+alert_email_addresses = ["devops@example.com", "sre@example.com"]
+monthly_budget_amount = 5000
+budget_alert_thresholds = [80, 95]
+enable_custom_metrics = true

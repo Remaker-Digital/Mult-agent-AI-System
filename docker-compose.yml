@@ -1,0 +1,253 @@
+# Multi-Agent AI Platform - Development Environment
+# Docker Compose configuration with best practices
+version: '3.8'
+
+# Define reusable agent service template using YAML anchors
+x-agent-defaults: &agent-defaults
+  build:
+    context: ./agents/base-agent
+    dockerfile: Dockerfile
+    args:
+      PYTHON_VERSION: "3.11"
+      APP_USER: appuser
+      APP_UID: 1000
+      APP_PORT: 8080
+  restart: unless-stopped
+  networks:
+    - agent-network
+  depends_on:
+    redis:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    start_period: 10s
+  # Resource limits for development
+  deploy:
+    resources:
+      limits:
+        cpus: '1.0'
+        memory: 512M
+      reservations:
+        cpus: '0.5'
+        memory: 256M
+  # Security options
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  cap_add:
+    - NET_BIND_SERVICE
+
+services:
+  #############################################################
+  # AI Agents
+  #############################################################
+  
+  conversation-agent:
+    <<: *agent-defaults
+    container_name: conversation-agent
+    ports:
+      - "8081:8080"
+    environment:
+      - AGENT_NAME=conversation-agent
+      - AGENT_DESCRIPTION=Handles conversational interactions
+      - ENVIRONMENT=development
+      - PORT=8080
+      - REDIS_HOSTNAME=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+    labels:
+      - "com.multiagent.service=conversation"
+      - "com.multiagent.type=agent"
+
+  analysis-agent:
+    <<: *agent-defaults
+    container_name: analysis-agent
+    ports:
+      - "8082:8080"
+    environment:
+      - AGENT_NAME=analysis-agent
+      - AGENT_DESCRIPTION=Performs data analysis
+      - ENVIRONMENT=development
+      - PORT=8080
+      - REDIS_HOSTNAME=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+    labels:
+      - "com.multiagent.service=analysis"
+      - "com.multiagent.type=agent"
+
+  recommendation-agent:
+    <<: *agent-defaults
+    container_name: recommendation-agent
+    ports:
+      - "8083:8080"
+    environment:
+      - AGENT_NAME=recommendation-agent
+      - AGENT_DESCRIPTION=Generates recommendations
+      - ENVIRONMENT=development
+      - PORT=8080
+      - REDIS_HOSTNAME=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+    labels:
+      - "com.multiagent.service=recommendation"
+      - "com.multiagent.type=agent"
+
+  knowledge-agent:
+    <<: *agent-defaults
+    container_name: knowledge-agent
+    ports:
+      - "8084:8080"
+    environment:
+      - AGENT_NAME=knowledge-agent
+      - AGENT_DESCRIPTION=Manages knowledge base
+      - ENVIRONMENT=development
+      - PORT=8080
+      - REDIS_HOSTNAME=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+    labels:
+      - "com.multiagent.service=knowledge"
+      - "com.multiagent.type=agent"
+
+  orchestration-agent:
+    <<: *agent-defaults
+    container_name: orchestration-agent
+    ports:
+      - "8085:8080"
+    environment:
+      - AGENT_NAME=orchestration-agent
+      - AGENT_DESCRIPTION=Orchestrates multi-agent workflows
+      - ENVIRONMENT=development
+      - PORT=8080
+      - REDIS_HOSTNAME=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+    labels:
+      - "com.multiagent.service=orchestration"
+      - "com.multiagent.type=agent"
+
+  #############################################################
+  # Redis Cache
+  #############################################################
+  
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-devpassword}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - agent-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "com.multiagent.service=cache"
+      - "com.multiagent.type=datastore"
+
+  #############################################################
+  # Nginx Reverse Proxy (simulates Application Gateway)
+  #############################################################
+  
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-gateway
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - nginx-cache:/var/cache/nginx
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      conversation-agent:
+        condition: service_healthy
+      analysis-agent:
+        condition: service_healthy
+      recommendation-agent:
+        condition: service_healthy
+      knowledge-agent:
+        condition: service_healthy
+      orchestration-agent:
+        condition: service_healthy
+    networks:
+      - agent-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "com.multiagent.service=gateway"
+      - "com.multiagent.type=proxy"
+
+#############################################################
+# Networks
+#############################################################
+
+networks:
+  agent-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+    labels:
+      - "com.multiagent.network=main"
+
+#############################################################
+# Volumes
+#############################################################
+
+volumes:
+  redis-data:
+    driver: local
+    labels:
+      - "com.multiagent.volume=redis-data"
+  nginx-cache:
+    driver: local
+    labels:
+      - "com.multiagent.volume=nginx-cache"
+  nginx-logs:
+    driver: local
+    labels:
+      - "com.multiagent.volume=nginx-logs"

@@ -1,0 +1,126 @@
+# ============================================
+# SECURITY-SENSITIVE FILES (NEVER COMMIT)
+# ============================================
+
+# Terraform state files (contain sensitive data)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+*.tfplan
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+
+# Secrets and certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# Azure credentials
+.azure/
+*.publishsettings
+local.settings.json
+
+# Terraform variable files with real values
+terraform.tfvars
+**/terraform.tfvars
+
+# ============================================
+# SAFE TO COMMIT (Examples and Templates)
+# ============================================
+
+# Allow example files
+!.env.example
+!terraform.tfvars.example
+!**/terraform.tfvars.example
+
+# ============================================
+# BUILD ARTIFACTS AND DEPENDENCIES
+# ============================================
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+*.egg-info/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker (only override files, not base configs)
+docker-compose.override.yml
+
+# ============================================
+# IDE AND OS FILES
+# ============================================
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# ============================================
+# LOGS AND TEMPORARY FILES
+# ============================================
+
+# Logs
+*.log
+logs/
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Coverage reports
+coverage/
+*.coverage
+htmlcov/
+
+# Database files (local only)
+*.db
+*.sqlite
+*.sqlite3

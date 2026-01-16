@@ -1,0 +1,109 @@
+# syntax=docker/dockerfile:1
+
+#############################################################
+# Production-Optimized Multi-Agent AI Platform Dockerfile
+# Includes additional security, monitoring, and production features
+#############################################################
+
+# Build arguments for flexibility
+ARG PYTHON_VERSION=3.11
+ARG APP_USER=appuser
+ARG APP_UID=1000
+ARG APP_PORT=8080
+
+#############################################################
+# Stage 1: Builder
+#############################################################
+FROM python:${PYTHON_VERSION}-slim AS builder
+
+# Install build dependencies with pinned security updates
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc=4:12.2.0-3 \
+    curl=7.88.1-10+deb12u7 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment for isolation
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy and install dependencies
+WORKDIR /build
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
+
+#############################################################
+# Stage 2: Runtime
+#############################################################
+FROM python:${PYTHON_VERSION}-slim AS runtime
+
+# Re-declare ARGs for this stage
+ARG APP_USER
+ARG APP_UID
+ARG APP_PORT
+
+# Add OCI-compliant labels
+LABEL org.opencontainers.image.title="Multi-Agent AI Platform - Production" \
+      org.opencontainers.image.description="Production-ready AI agent container" \
+      org.opencontainers.image.version="1.0.0" \
+      org.opencontainers.image.authors="info@remakerdigital.com" \
+      org.opencontainers.image.vendor="Remaker Digital" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.base.name="docker.io/library/python:${PYTHON_VERSION}-slim"
+
+# Install runtime dependencies (minimal) and security updates
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl=7.88.1-10+deb12u7 \
+    ca-certificates \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user with security hardening
+RUN useradd -m -u ${APP_UID} -l ${APP_USER} && \
+    mkdir -p /app && \
+    chown -R ${APP_USER}:${APP_USER} /app
+
+# Set working directory
+WORKDIR /app
+
+# Copy virtual environment from builder
+COPY --from=builder --chown=${APP_USER}:${APP_USER} /opt/venv /opt/venv
+
+# Copy application code with proper ownership
+COPY --chown=${APP_USER}:${APP_USER} app.py .
+
+# Switch to non-root user
+USER ${APP_USER}
+
+# Set production environment variables
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONHASHSEED=random \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PORT=${APP_PORT}
+
+# Expose port
+EXPOSE ${APP_PORT}
+
+# Production health check with optimized settings
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${APP_PORT}/health || exit 1
+
+# Production-optimized gunicorn command
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:8080", \
+     "--workers", "4", \
+     "--threads", "2", \
+     "--worker-class", "gthread", \
+     "--timeout", "120", \
+     "--graceful-timeout", "30", \
+     "--keep-alive", "5", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "100", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info", \
+     "--capture-output", \
+     "app:app"]
