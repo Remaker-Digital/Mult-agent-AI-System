@@ -42,9 +42,8 @@ resource "azurerm_resource_group" "main" {
   name     = "rg-${var.project_name}-${var.environment}-${var.location}"
   location = var.location
 
-  tags = merge(var.tags, {
-    Environment = var.environment
-    ManagedBy   = "Terraform"
+  tags = merge(local.common_tags, local.cost_allocation_tags, {
+    Component = "Resource-Group"
   })
 }
 
@@ -58,7 +57,7 @@ module "networking" {
   resource_group_name = azurerm_resource_group.main.name
   vnet_address_space = var.vnet_address_space
   subnet_config      = var.subnet_config
-  tags               = var.tags
+  tags               = local.networking_tags
 }
 
 # Observability Module (Application Insights, Log Analytics)
@@ -80,7 +79,7 @@ module "observability" {
   # Metrics
   enable_custom_metrics     = var.enable_custom_metrics
 
-  tags                      = var.tags
+  tags                      = local.observability_tags
 }
 
 # Security Module (Key Vault and Managed Identities)
@@ -95,7 +94,7 @@ module "security" {
   subnet_id           = module.networking.private_endpoint_subnet_id
   private_dns_zone_id = module.networking.private_dns_zone_ids["keyvault"]
   log_analytics_workspace_id = module.observability.log_analytics_workspace_id
-  tags                = var.tags
+  tags                = local.security_tags
 
   depends_on = [module.networking, module.observability]
 }
@@ -114,7 +113,7 @@ module "container_registry" {
   subnet_id           = module.networking.private_endpoint_subnet_id
   private_dns_zone_id = module.networking.private_dns_zone_ids["acr"]
   log_analytics_workspace_id = module.observability.log_analytics_workspace_id
-  tags                = var.tags
+  tags                = local.container_registry_tags
 
   depends_on = [module.networking, module.observability]
 }
@@ -148,7 +147,7 @@ module "data_layer" {
   redis_private_dns_zone_id            = module.networking.private_dns_zone_ids["redis"]
   key_vault_id                         = module.security.key_vault_id
   log_analytics_workspace_id           = module.observability.log_analytics_workspace_id
-  tags                                 = var.tags
+  tags                                 = local.data_layer_tags
 
   depends_on = [module.networking, module.security, module.observability]
 }
@@ -196,7 +195,8 @@ module "agent_infrastructure" {
   # Managed identity
   user_assigned_identity_id = module.security.user_assigned_identity_id
 
-  tags                      = var.tags
+  # Agent-specific tags with cost allocation
+  agent_tags                = local.agent_cost_tags
 
   depends_on = [
     module.networking,
@@ -235,11 +235,87 @@ module "gateway" {
   # Observability
   log_analytics_workspace_id = module.observability.log_analytics_workspace_id
 
-  tags                      = var.tags
+  tags                      = local.gateway_tags
 
   depends_on = [
     module.networking,
     module.agent_infrastructure,
+    module.observability
+  ]
+}
+
+# Cognitive Search Module (for Knowledge Agent)
+module "cognitive_search" {
+  count  = var.enable_cognitive_search ? 1 : 0
+  source = "./modules/cognitive-search"
+
+  project_name        = var.project_name
+  environment         = var.environment
+  location            = var.location
+  resource_group_name = azurerm_resource_group.main.name
+  resource_suffix     = random_string.suffix.result
+
+  # Search configuration
+  search_sku              = var.cognitive_search_sku
+  replica_count           = var.search_replica_count
+  partition_count         = var.search_partition_count
+  enable_semantic_search  = var.enable_semantic_search
+
+  # Private endpoint
+  enable_private_endpoint = true
+  subnet_id               = module.networking.private_endpoint_subnet_id
+  private_dns_zone_id     = module.networking.private_dns_zone_ids["search"]
+
+  # Key Vault integration
+  key_vault_id = module.security.key_vault_id
+
+  # RBAC - Grant Knowledge Agent access to search
+  knowledge_agent_identity_principal_id = module.security.user_assigned_identity_principal_id
+  cosmos_db_account_id                  = module.data_layer.cosmos_db_account_id
+
+  # Observability
+  log_analytics_workspace_id = module.observability.log_analytics_workspace_id
+  enable_alerts              = true
+  action_group_id            = module.observability.action_group_id
+
+  tags = local.cognitive_search_tags
+
+  depends_on = [
+    module.networking,
+    module.security,
+    module.data_layer,
+    module.observability
+  ]
+}
+
+# Azure Front Door Module (Global Load Balancing)
+module "front_door" {
+  count  = var.enable_front_door ? 1 : 0
+  source = "./modules/front-door"
+
+  project_name        = var.project_name
+  environment         = var.environment
+  resource_group_name = azurerm_resource_group.main.name
+
+  # Front Door configuration
+  frontdoor_sku_name = var.frontdoor_sku
+
+  # Backend configuration (Application Gateway as primary origin)
+  primary_backend_hostname = module.gateway.public_ip_fqdn
+  regional_backends        = var.regional_backends
+
+  # WAF configuration
+  enable_waf              = var.enable_waf
+  waf_mode                = var.waf_mode
+  rate_limit_threshold    = var.frontdoor_rate_limit_threshold
+
+  # Observability
+  log_analytics_workspace_id = module.observability.log_analytics_workspace_id
+
+  tags = local.front_door_tags
+
+  depends_on = [
+    module.gateway,
     module.observability
   ]
 }

@@ -97,3 +97,20 @@ alert_email_addresses = ["dev-team@example.com"]
 monthly_budget_amount = 500  # Reduced budget for dev
 budget_alert_thresholds = [80, 95]
 enable_custom_metrics = false  # Disabled for dev
+# Cost Allocation Tags for Chargeback
+cost_center     = "Engineering"
+business_unit   = "AI-Platform-Dev"
+department      = "Engineering"
+billing_contact = "dev-finance@example.com"
+
+# Front Door Configuration (Disabled for dev to save costs)
+enable_front_door            = false
+frontdoor_sku                = "Standard_AzureFrontDoor"
+frontdoor_rate_limit_threshold = 100
+
+# Cognitive Search Configuration (Disabled for dev to save costs)
+enable_cognitive_search  = false
+cognitive_search_sku     = "basic"
+search_replica_count     = 1
+search_partition_count   = 1
+enable_semantic_search   = false

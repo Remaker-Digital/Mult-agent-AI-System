@@ -6,6 +6,7 @@ This directory contains Terraform configuration for deploying a production-ready
 
 The infrastructure includes:
 
+### Core Components
 - **5 Containerized AI Agents** running on Azure Container Instances
 - **Azure Cosmos DB** for conversation state storage with autoscaling (400-4000 RU/s)
 - **Azure Cache for Redis** for session management (4GB memory, configurable)
@@ -15,6 +16,13 @@ The infrastructure includes:
 - **Azure Monitor** (Application Insights + Log Analytics) for observability
 - **Virtual Network** with private endpoints and NSGs for security
 - **Managed Identities** for secure, credential-free authentication
+
+### New Features (v1.1.0)
+- **Azure Front Door** for global load balancing across APAC, EMEA, and Americas *(optional)*
+- **Azure Cognitive Search** for intelligent knowledge retrieval in the Knowledge Agent *(optional)*
+- **Cost Allocation Tags** for detailed chargeback reporting by agent and environment
+
+> See [NEW_FEATURES_SUMMARY.md](./NEW_FEATURES_SUMMARY.md) for detailed information about these enhancements.
 
 ## Prerequisites
 

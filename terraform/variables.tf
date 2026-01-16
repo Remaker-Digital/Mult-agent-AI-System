@@ -343,3 +343,108 @@ variable "enable_custom_metrics" {
   type        = bool
   default     = true
 }
+
+# Cost Allocation Variables for Chargeback Reporting
+variable "cost_center" {
+  description = "Cost center for chargeback reporting"
+  type        = string
+  default     = "Engineering"
+}
+
+variable "business_unit" {
+  description = "Business unit for cost allocation"
+  type        = string
+  default     = "AI-Platform"
+}
+
+variable "department" {
+  description = "Department for cost allocation"
+  type        = string
+  default     = "Engineering"
+}
+
+variable "billing_contact" {
+  description = "Primary contact for billing and cost inquiries"
+  type        = string
+  default     = "finance@example.com"
+}
+
+# Front Door Variables
+variable "enable_front_door" {
+  description = "Enable Azure Front Door for global load balancing"
+  type        = bool
+  default     = false
+}
+
+variable "frontdoor_sku" {
+  description = "SKU for Azure Front Door"
+  type        = string
+  default     = "Standard_AzureFrontDoor"
+
+  validation {
+    condition     = contains(["Standard_AzureFrontDoor", "Premium_AzureFrontDoor"], var.frontdoor_sku)
+    error_message = "Front Door SKU must be Standard_AzureFrontDoor or Premium_AzureFrontDoor."
+  }
+}
+
+variable "regional_backends" {
+  description = "Map of regional backend configurations for Front Door"
+  type = map(object({
+    hostname = string
+    priority = number
+    weight   = number
+  }))
+  default = {}
+}
+
+variable "frontdoor_rate_limit_threshold" {
+  description = "Rate limit threshold for Front Door WAF"
+  type        = number
+  default     = 100
+}
+
+# Cognitive Search Variables
+variable "enable_cognitive_search" {
+  description = "Enable Azure Cognitive Search for knowledge retrieval"
+  type        = bool
+  default     = false
+}
+
+variable "cognitive_search_sku" {
+  description = "SKU for Azure Cognitive Search"
+  type        = string
+  default     = "standard"
+
+  validation {
+    condition     = contains(["free", "basic", "standard", "standard2", "standard3", "storage_optimized_l1", "storage_optimized_l2"], var.cognitive_search_sku)
+    error_message = "Invalid Cognitive Search SKU."
+  }
+}
+
+variable "search_replica_count" {
+  description = "Number of search replicas for high availability"
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.search_replica_count >= 1 && var.search_replica_count <= 12
+    error_message = "Search replica count must be between 1 and 12."
+  }
+}
+
+variable "search_partition_count" {
+  description = "Number of search partitions for scale"
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = contains([1, 2, 3, 4, 6, 12], var.search_partition_count)
+    error_message = "Search partition count must be 1, 2, 3, 4, 6, or 12."
+  }
+}
+
+variable "enable_semantic_search" {
+  description = "Enable semantic search for better relevance"
+  type        = bool
+  default     = true
+}

@@ -7,8 +7,9 @@ This is a **production-ready multi-agent AI system** deployed on **Microsoft Azu
 ## Project Status
 
 **Status**: ✅ Ready for GitHub Publication
-**Last Updated**: 2025-01-15
-**Current Phase**: Ready to publish to GitHub and deploy to Azure
+**Last Updated**: 2026-01-15
+**Version**: 1.1.0
+**Current Phase**: Enhanced with global distribution, AI search, and cost tracking
 **Next Phase**: Publish to GitHub, then deploy to Azure
 
 ## Architecture Summary
@@ -50,6 +51,29 @@ This is a **production-ready multi-agent AI system** deployed on **Microsoft Azu
    - Geo-replication for production
    - Private endpoint access only
 
+### New Features (v1.1.0 - Added 2026-01-15)
+
+7. **Azure Front Door** (Optional):
+   - Global load balancing across APAC, EMEA, Americas
+   - CDN capabilities with edge caching
+   - DDoS protection and WAF
+   - Intelligent routing to nearest region
+   - Rate limiting and bot protection
+
+8. **Azure Cognitive Search** (Optional):
+   - Intelligent search for Knowledge Agent
+   - Full-text and semantic search
+   - Vector search for embeddings
+   - Auto-indexing from Cosmos DB
+   - 56 language analyzers
+
+9. **Cost Allocation Tags**:
+   - Agent-specific cost tracking
+   - Environment-based chargeback
+   - Business unit allocation
+   - Component-level cost breakdown
+   - Integration with Azure Cost Management
+
 ## Directory Structure
 
 ```
@@ -61,19 +85,23 @@ Multi-agent Service Platform/
 │   ├── terraform.tfvars.example       # Configuration template
 │   ├── .gitignore                     # Git ignore rules
 │   │
-│   ├── modules/                       # Terraform modules (7 total)
+│   ├── modules/                       # Terraform modules (9 total)
 │   │   ├── networking/                # VNet, subnets, NSGs, DNS
 │   │   ├── security/                  # Key Vault, identities, RBAC
 │   │   ├── container-registry/        # ACR with geo-replication
 │   │   ├── data-layer/                # Cosmos DB and Redis
 │   │   ├── observability/             # App Insights, Log Analytics
 │   │   ├── agent-infrastructure/      # Container instances
-│   │   └── gateway/                   # Application Gateway + WAF
+│   │   ├── gateway/                   # Application Gateway + WAF
+│   │   ├── front-door/                # Azure Front Door (NEW)
+│   │   └── cognitive-search/          # Azure Cognitive Search (NEW)
 │   │
 │   ├── environments/                  # Environment-specific configs
 │   │   ├── dev/terraform.tfvars      # Development (~$500/month)
-│   │   ├── staging/terraform.tfvars  # Staging (~$2,000/month)
-│   │   └── production/terraform.tfvars # Production (~$5,000/month)
+│   │   ├── staging/terraform.tfvars  # Staging (~$2,285/month)
+│   │   └── production/terraform.tfvars # Production (~$5,800/month)
+│   │
+│   ├── locals.tf                      # Tagging strategy (NEW)
 │   │
 │   ├── scripts/                       # Helper scripts
 │   │   ├── init.sh                   # Initialize Terraform
@@ -83,6 +111,7 @@ Multi-agent Service Platform/
 │   │
 │   └── docs/                          # Documentation
 │       ├── README.md                  # Main documentation (600 lines)
+│       ├── NEW_FEATURES_SUMMARY.md    # v1.1.0 features guide (NEW)
 │       ├── DEPLOYMENT_GUIDE.md        # Step-by-step guide (500 lines)
 │       ├── QUICK_REFERENCE.md         # Command reference (400 lines)
 │       └── FILES_SUMMARY.md           # File inventory (400 lines)
@@ -97,7 +126,7 @@ Multi-agent Service Platform/
 - **Azure CLI** 2.40+ - Azure management
 - **Bash** - Automation scripts
 
-### Azure Services (20+ resources)
+### Azure Services (25+ resources)
 - Azure Container Instances
 - Azure Container Registry
 - Azure Cosmos DB
@@ -109,6 +138,8 @@ Multi-agent Service Platform/
 - Azure Managed Identities
 - Azure Private Endpoints
 - Azure Storage (for Terraform state)
+- **Azure Front Door** (NEW - v1.1.0)
+- **Azure Cognitive Search** (NEW - v1.1.0)
 
 ### Development Tools
 - Docker Desktop - Container images and local testing
@@ -159,31 +190,34 @@ Multi-agent Service Platform/
 ## Environment Configurations
 
 ### Development
-- **Cost**: ~$500/month
+- **Cost**: ~$500/month (unchanged)
 - **Purpose**: Development and testing
 - **Features**: Basic SKUs, minimal autoscaling, no geo-replication, WAF disabled
+- **New Features**: Front Door disabled, Cognitive Search disabled (cost optimization)
 - **Resources**: 0.5 CPU, 1.5GB RAM per agent, 1-3 instances
 
 ### Staging
-- **Cost**: ~$2,000/month
+- **Cost**: ~$2,285/month (+$285 from v1.1.0)
 - **Purpose**: Pre-production validation
 - **Features**: Standard SKUs, moderate autoscaling, WAF in detection mode
+- **New Features**: Front Door enabled (Standard), Cognitive Search enabled (2 replicas)
 - **Resources**: 1 CPU, 2GB RAM per agent, 1-5 instances
 
 ### Production
-- **Cost**: ~$5,000/month
+- **Cost**: ~$5,800/month (+$800 from v1.1.0)
 - **Purpose**: Live production workloads
 - **Features**: Premium SKUs, full autoscaling, geo-replication, WAF in prevention mode, zone redundancy
+- **New Features**: Front Door enabled (Premium, multi-region), Cognitive Search enabled (3 replicas, 2 partitions)
 - **Resources**: 2 CPU, 4GB RAM per agent, 2-10 instances
 
 ## Current File Inventory
 
-**Total Files**: 50+
-**Total Lines of Code**: ~5,000+
-**Terraform Modules**: 7
+**Total Files**: 60+
+**Total Lines of Code**: ~7,500+
+**Terraform Modules**: 9 (added front-door, cognitive-search)
 **Environments**: 3
 **Sample Agents**: 1 (base-agent)
-**Documentation Files**: 10+
+**Documentation Files**: 11+ (added NEW_FEATURES_SUMMARY.md)
 **Helper Scripts**: 4
 **GitHub Workflows**: 2
 

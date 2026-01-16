@@ -168,6 +168,38 @@ output "application_gateway_fqdn" {
   value       = module.gateway.public_ip_fqdn
 }
 
+# Cognitive Search Outputs
+output "cognitive_search_endpoint" {
+  description = "Endpoint URL of the Cognitive Search service"
+  value       = var.enable_cognitive_search ? module.cognitive_search[0].search_service_endpoint : null
+}
+
+output "cognitive_search_name" {
+  description = "Name of the Cognitive Search service"
+  value       = var.enable_cognitive_search ? module.cognitive_search[0].search_service_name : null
+}
+
+output "cognitive_search_id" {
+  description = "ID of the Cognitive Search service"
+  value       = var.enable_cognitive_search ? module.cognitive_search[0].search_service_id : null
+}
+
+# Front Door Outputs
+output "front_door_endpoint_hostname" {
+  description = "Hostname of the Front Door endpoint"
+  value       = var.enable_front_door ? module.front_door[0].frontdoor_endpoint_hostname : null
+}
+
+output "front_door_public_url" {
+  description = "Public URL for accessing the service via Front Door"
+  value       = var.enable_front_door ? module.front_door[0].public_endpoint_url : null
+}
+
+output "front_door_id" {
+  description = "ID of the Front Door profile"
+  value       = var.enable_front_door ? module.front_door[0].frontdoor_id : null
+}
+
 # Summary Output for CI/CD
 output "deployment_summary" {
   description = "Summary of deployed resources for CI/CD integration"
@@ -177,8 +209,11 @@ output "deployment_summary" {
     resource_group          = azurerm_resource_group.main.name
     container_registry      = module.container_registry.login_server
     application_gateway_ip  = module.gateway.public_ip_address
+    application_gateway_fqdn = module.gateway.public_ip_fqdn
+    front_door_url          = var.enable_front_door ? module.front_door[0].public_endpoint_url : "Not enabled"
     cosmos_db_endpoint      = module.data_layer.cosmos_db_endpoint
     redis_hostname          = module.data_layer.redis_hostname
+    cognitive_search_endpoint = var.enable_cognitive_search ? module.cognitive_search[0].search_service_endpoint : "Not enabled"
     key_vault_uri           = module.security.key_vault_uri
     log_analytics_workspace = module.observability.log_analytics_workspace_name
   }

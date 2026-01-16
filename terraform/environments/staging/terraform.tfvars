@@ -97,3 +97,21 @@ alert_email_addresses = ["staging-team@example.com", "devops@example.com"]
 monthly_budget_amount = 2000
 budget_alert_thresholds = [80, 95]
 enable_custom_metrics = true
+
+# Cost Allocation Tags for Chargeback
+cost_center     = "Engineering"
+business_unit   = "AI-Platform-Staging"
+department      = "Engineering"
+billing_contact = "staging-finance@example.com"
+
+# Front Door Configuration (Enabled to test production-like setup)
+enable_front_door            = true
+frontdoor_sku                = "Standard_AzureFrontDoor"  # Standard for staging
+frontdoor_rate_limit_threshold = 200
+
+# Cognitive Search Configuration (Enabled for testing Knowledge Agent)
+enable_cognitive_search  = true
+cognitive_search_sku     = "standard"
+search_replica_count     = 2  # Moderate HA
+search_partition_count   = 1
+enable_semantic_search   = true

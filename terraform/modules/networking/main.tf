@@ -298,6 +298,13 @@ resource "azurerm_private_dns_zone" "acr" {
   tags = var.tags
 }
 
+resource "azurerm_private_dns_zone" "search" {
+  name                = "privatelink.search.windows.net"
+  resource_group_name = var.resource_group_name
+
+  tags = var.tags
+}
+
 # VNet Links for Private DNS Zones
 resource "azurerm_private_dns_zone_virtual_network_link" "cosmos" {
   name                  = "cosmos-vnet-link"
@@ -333,6 +340,16 @@ resource "azurerm_private_dns_zone_virtual_network_link" "acr" {
   name                  = "acr-vnet-link"
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.acr.name
+  virtual_network_id    = azurerm_virtual_network.main.id
+  registration_enabled  = false
+
+  tags = var.tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "search" {
+  name                  = "search-vnet-link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.search.name
   virtual_network_id    = azurerm_virtual_network.main.id
   registration_enabled  = false
 

@@ -133,4 +133,11 @@ variable "max_instance_count" {
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)
+  default     = {}
+}
+
+variable "agent_tags" {
+  description = "Map of agent-specific tags for cost allocation"
+  type        = map(map(string))
+  default     = {}
 }

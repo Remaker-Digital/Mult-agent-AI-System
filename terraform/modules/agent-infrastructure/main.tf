@@ -85,9 +85,9 @@ resource "azurerm_container_group" "agents" {
     }
   }
 
-  tags = merge(var.tags, {
+  tags = lookup(var.agent_tags, each.key, merge(var.tags, {
     Agent = each.value.name
-  })
+  }))
 }
 
 # Autoscaling profiles (simulated via Azure Automation)

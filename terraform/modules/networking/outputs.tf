@@ -48,6 +48,7 @@ output "private_dns_zone_ids" {
     redis    = azurerm_private_dns_zone.redis.id
     keyvault = azurerm_private_dns_zone.keyvault.id
     acr      = azurerm_private_dns_zone.acr.id
+    search   = azurerm_private_dns_zone.search.id
   }
 }
 
@@ -58,5 +59,6 @@ output "private_dns_zone_names" {
     redis    = azurerm_private_dns_zone.redis.name
     keyvault = azurerm_private_dns_zone.keyvault.name
     acr      = azurerm_private_dns_zone.acr.name
+    search   = azurerm_private_dns_zone.search.name
   }
 }

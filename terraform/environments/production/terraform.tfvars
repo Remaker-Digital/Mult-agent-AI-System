@@ -98,3 +98,35 @@ alert_email_addresses = ["sre@example.com", "devops@example.com", "oncall@exampl
 monthly_budget_amount = 5000
 budget_alert_thresholds = [80, 95]
 enable_custom_metrics = true
+
+# Cost Allocation Tags for Chargeback
+cost_center     = "Production-Services"
+business_unit   = "AI-Platform-Production"
+department      = "Engineering"
+billing_contact = "finance@example.com"
+
+# Front Door Configuration (Enabled for global distribution)
+enable_front_door            = true
+frontdoor_sku                = "Premium_AzureFrontDoor"  # Premium for production
+frontdoor_rate_limit_threshold = 1000
+
+# Regional backends for Front Door (APAC, EMEA, Americas)
+regional_backends = {
+  apac = {
+    hostname = "appgw-multiagent-ai-production-apac.eastasia.cloudapp.azure.com"  # Replace with actual APAC gateway
+    priority = 2
+    weight   = 500
+  }
+  emea = {
+    hostname = "appgw-multiagent-ai-production-emea.westeurope.cloudapp.azure.com"  # Replace with actual EMEA gateway
+    priority = 2
+    weight   = 500
+  }
+}
+
+# Cognitive Search Configuration (Enabled for Knowledge Agent)
+enable_cognitive_search  = true
+cognitive_search_sku     = "standard"
+search_replica_count     = 3  # High availability
+search_partition_count   = 2  # Scale for performance
+enable_semantic_search   = true
